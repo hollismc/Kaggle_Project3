@@ -1,0 +1,122 @@
+---
+title: "Kaggle_Project3"
+author: "Hollismc"
+date: '2022-04-26'
+output:
+  html_document:
+    df_print: paged
+---
+## Introduction
+Air pollution
+Air pollution is one of the most pressing environmental and health issues across OECD countries and beyond.
+
+Air pollution exposure and air pollution effects
+Fine particulate matter (PM2.5) in the air pollutant that poses the greatest risk to health globally, affecting more people than any other pollutant. Chronic exposure to PM2.5 considerably increases the risk of respiratory and cardiovascular diseases in particular. Data refer to population exposure to more than 10 micrograms/m3 and are expressed as annual averages.
+
+Fine particulate matter (PM2.5) can be inhaled and cause serious health problems including both respiratory and cardiovascular disease, having its most severe effects on children and elderly people. Exposure to PM2.5 has been shown to considerably increase the risk of heart disease and stroke in particular. Cost estimates represent only the cost of premature mortalities. They are calculated using estimates of the “Value of a Statistical Life” (VSL) and the number of premature deaths attributable to ambient particulate matter.
+##  libraries
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(manipulate)
+library(e1071)
+```
+## Download Data
+```{r}
+effect <- read_csv("archive-3/air_pollution_eff_by_country_oecd.csv")
+expose <- read_csv("archive-3/air_pollution_exp_by_country_oecd.csv")
+```
+## Histograms of exposures and effects
+```{r}
+effectdata <- effect %>% select(LOCATION, SUBJECT, TIME, Value) 
+effectdata1 <- rename(effectdata, EFFECT=Value, Mortality=SUBJECT)
+effectdata1 <- effectdata1 %>% select(LOCATION, Mortality, TIME, EFFECT)
+exposedata <- expose %>% select(LOCATION, SUBJECT, TIME, Value)
+exposedata1 <- rename(exposedata, EXPOSURE=Value, EXPOSPM2.5=SUBJECT)
+exposedata1 <- exposedata1 %>% select(LOCATION, EXPOSPM2.5, TIME, EXPOSURE)
+effexp <- right_join(effectdata1, exposedata1)
+hist(effexp$EXPOSURE, xlab = "EXPOSURE", main = "PM2.5")
+hist(effexp$EFFECT, xlab = "EFFECT", main = "pm2.5")
+```
+## Filter out countries greater than the mean and plot Exposure to Pm2.5 and Effects 
+```{r}
+effectmean <- mean(effectdata1$EFFECT)
+exposemean <- mean(exposedata1$EXPOSURE)
+bigeff <- effectdata1 %>% filter(EFFECT > mean(EFFECT))
+bigexp <- exposedata1 %>% filter(EXPOSURE > mean(EXPOSURE))
+bigeffexp <- full_join(bigeff, bigexp)
+effexpplot <- ggplot(data = bigeff, aes(LOCATION, EFFECT)) +
+        geom_point() +
+        scale_x_discrete(guide = guide_axis(n.dodge = 3)) +
+        labs(x="Country", y = "pm2.5 values", title = "Countries with above the mean pollution effect on Mortality")
+effexpplot
+
+exposplot <- ggplot(data = bigexp, aes(LOCATION, EXPOSURE)) +
+        geom_point() +
+        scale_x_discrete(guide = guide_axis(n.dodge = 3)) +
+        labs(x= "Country", y = "pm2.5", title = "Countries with above the mean Exposure to PM2.5")
+exposplot
+```
+##  Predict Effect by establishing a linear relationship with Exposure
+```{r}
+scatter.smooth(x=effexp$EFFECT, y=effexp$EXPOSURE, main="exposure ~ effect")
+
+par(mfrow=c(1,2))
+boxplot(bigeff$EFFECT, main="Effect Value", sub=paste("outlier rows", boxplot.stats(bigeff$EFFECT)$out))
+boxplot(bigexp$EXPOSURE, main="Exposure Value", sub=paste("oulier rows", boxplot.stats(bigexp$EXPOSURE)$out))
+
+par(mfrow=c(1,2))
+plot(density(bigeff$EFFECT), main="Density plot: Effect", ylab="frequency", sub=paste("skewness", round(e1071::skewness(bigeff$EFFECT),2)))
+polygon(density(bigeff$EFFECT), col = "red")
+plot(density(bigexp$EXPOSURE), main = "Density Plot::Exposure", ylab = "frequency",sub=paste("skewness", round(e1071::skewness(bigexp$EXPOSURE),2)))
+polygon(density(bigexp$EXPOSURE), col = "red")
+```
+##  Correlation and linear model
+```{r}
+cor(effexp$EFFECT, effexp$EXPOSURE)
+linmodel <- lm(EFFECT ~ EXPOSURE, data = effexp)
+print(linmodel)
+summary(linmodel)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
