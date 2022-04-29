@@ -27,7 +27,7 @@ library(e1071)
 effect <- read_csv("archive-3/air_pollution_eff_by_country_oecd.csv")
 expose <- read_csv("archive-3/air_pollution_exp_by_country_oecd.csv")
 ```
-## Histograms of exposures and effects
+## Data Manipulation/Histograms of exposures and effects
 ```{r}
 effectdata <- effect %>% select(LOCATION, SUBJECT, TIME, Value) 
 effectdata1 <- rename(effectdata, EFFECT=Value, Mortality=SUBJECT)
@@ -46,17 +46,21 @@ exposemean <- mean(exposedata1$EXPOSURE)
 bigeff <- effectdata1 %>% filter(EFFECT > mean(EFFECT))
 bigexp <- exposedata1 %>% filter(EXPOSURE > mean(EXPOSURE))
 bigeffexp <- full_join(bigeff, bigexp)
-effexpplot <- ggplot(data = bigeff, aes(LOCATION, EFFECT)) +
+effexpplot <- ggplot(data = bigeffexp, aes(LOCATION, EFFECT)) +
         geom_point() +
         scale_x_discrete(guide = guide_axis(n.dodge = 3)) +
         labs(x="Country", y = "pm2.5 values", title = "Countries with above the mean pollution effect on Mortality")
 effexpplot
 
-exposplot <- ggplot(data = bigexp, aes(LOCATION, EXPOSURE)) +
+exposplot <- ggplot(data = bigeffexp, aes(LOCATION, EXPOSURE)) +
         geom_point() +
         scale_x_discrete(guide = guide_axis(n.dodge = 3)) +
         labs(x= "Country", y = "pm2.5", title = "Countries with above the mean Exposure to PM2.5")
 exposplot
+
+efexpplot <- ggplot(data = bigeffexp, aes(EXPOSURE, EFFECT)) +
+        geom_point() +
+        geom_smooth(method = "lm")
 ```
 ##  Predict Effect by establishing a linear relationship with Exposure
 ```{r}
